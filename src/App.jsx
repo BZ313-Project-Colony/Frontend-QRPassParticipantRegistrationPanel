@@ -1,8 +1,11 @@
+import { React, useState, useEffect } from "react";
 import axios from "axios";
-import { useState, useEffect } from "react";
-import FormInput from "./components/FormInput";
 import { useParams } from "react-router-dom";
+import FormInput from "./components/FormInput";
+import { toast, ToastContainer } from "react-toastify";
 import formatTimestamp from "./DateUtils";
+import ErrorPage from "./ErrorPage";
+import "react-toastify/dist/ReactToastify.css";
 
 function App() {
   let { event_id } = useParams();
@@ -10,7 +13,7 @@ function App() {
   const [values, setValues] = useState({ name: "", surname: "", email: "" });
   const [eventDetail, setEventDetail] = useState();
   const [isLoading, setIsLoading] = useState(false);
-  const [isRegistered, setIsRegistered] = useState(false); 
+  const [error, setError] = useState(null);
   const inputs = [
     {
       id: 1,
@@ -50,51 +53,34 @@ function App() {
         setEventDetail(response.data);
         console.log(response.data);
       } catch (err) {
-        window.alert("Hata 404 \nBağlantı Linkini kontrol ediniz !..");
+        setError(err);
       }
     };
     fetchEventDetails();
   }, []);
-/*
-  const registerEvent = async () => {
-    try {
-      const response = await axios.post(
-        "https://jsonplaceholder.typicode.com/posts"
-      );
-      this.setState({
-        info:
-          response.values.name +
-          response.values.surname +
-          response.values.email,
-      });
-    } catch (err) {
-      console.log(err);
-    }
-  };
-  */
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const checkbox = document.getElementById("checkbox"); 
+    const checkbox = document.getElementById("checkbox");
     if (!checkbox.checked) {
-      window.alert("KVKK metnini onaylamadan işleme devam edemezsiniz");
+      toast.error("KVKK metnini onaylamadan işleme devam edemezsiniz");
     } else {
-      setIsLoading(true)
+      setIsLoading(true);
       try {
         const response = await axios.post(
           `https://qr-pass-service-9363756ce9d4.herokuapp.com/v1/events/register`,
-          
-          {  
-            eventId:event_id,
+
+          {
+            eventId: event_id,
             name: values.name,
             surname: values.surname,
             email: values.email,
           }
         );
-        setIsLoading(false)
-        setIsRegistered(true)
+        setIsLoading(false);
+        toast.success("Başarıyla kayıt oldunuz!");
       } catch (error) {
-        window.alert(error.response.data);
+        toast.error(error.response.data);
         setIsLoading(false);
       }
     }
@@ -105,9 +91,13 @@ function App() {
     setValues({ ...values, [e.target.name]: e.target.value });
     console.log(values);
   };
+  if (error) {
+    return <ErrorPage />;
+  }
 
   return (
     <div className="App">
+      <ToastContainer />
       <form onSubmit={handleSubmit}>
         <div className="div3">
           <div className="div1">
@@ -149,8 +139,7 @@ function App() {
           </a>{" "}
           metnini okudum onaylıyorum
         </label>
-        { isRegistered ? <div>Etkinliğe kayıt yapıldı.</div> : <button>{isLoading ? "Loading" : "Kaydol"}</button> }
-        
+        <button>{isLoading ? "Loading" : "Kaydol"}</button>
       </form>
     </div>
   );
